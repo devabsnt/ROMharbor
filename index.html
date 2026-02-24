@@ -1,0 +1,12 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>ROMharbor</title>
+<style>body{background:#0a0a0a;color:#e0e0e0;font-family:monospace;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}#l{text-align:center}#b{width:300px;height:16px;background:#222;border-radius:8px;overflow:hidden;margin:16px auto}#f{height:100%;background:#00ff88;width:0%;transition:width .3s}h2{color:#00ff88}</style></head><body><div id="l"><h2>&#9973; ROMharbor</h2><p id="s">Connecting...</p><div id="b"><div id="f"></div></div></div><script>
+(async()=>{const CA="0x39421f0da6F737cc6b6ee0eC5fcC4C4aEf7cAD0b";const RPCS=["https://eth.llamarpc.com","https://1rpc.io/eth","https://ethereum-rpc.publicnode.com","https://0xrpc.io/eth"];const s=document.getElementById("s"),f=document.getElementById("f");
+function hex(n,w){let h=BigInt(n).toString(16);while(h.length<w)h="0"+h;return h}
+function enc(sel,args){let d=sel;for(const a of args)d+=hex(a,64);return d}
+async function call(data){for(const RPC of RPCS){try{const r=await fetch(RPC,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method:"eth_call",params:[{to:CA,data:data},"latest"]})});const j=await r.json();if(j.result&&j.result!=="0x")return j.result;}catch(e){}}throw new Error("All RPCs failed");}
+try{s.textContent="Fetching frontend...";const nr=await call(enc("0xdfe654b1",[]));const n=Number(BigInt(nr));const chunks=[];
+for(let i=0;i<n;i++){const r=await call(enc("0x6e680e0c",[i]));const off=Number(BigInt("0x"+r.slice(2,66)));const len=Number(BigInt("0x"+r.slice(2+off*2,2+off*2+64)));const hexData=r.slice(2+off*2+64,2+off*2+64+len*2);const bytes=new Uint8Array(len);for(let j=0;j<len;j++)bytes[j]=parseInt(hexData.substr(j*2,2),16);chunks.push(bytes);f.style.width=((i+1)/n*100)+"%";s.textContent="Loading "+(i+1)+"/"+n+"...";}
+let total=0;for(const c of chunks)total+=c.length;const combined=new Uint8Array(total);let pos=0;for(const c of chunks){combined.set(c,pos);pos+=c.length;}
+const html=new TextDecoder().decode(combined);const p=new DOMParser();const d=p.parseFromString(html,'text/html');document.head.innerHTML=d.head.innerHTML;document.body.innerHTML='';for(const node of d.body.childNodes){if(node.nodeName==='SCRIPT'){const sc=document.createElement('script');sc.textContent=node.textContent;document.body.appendChild(sc);}else{document.body.appendChild(document.importNode(node,true));}}
+}catch(e){s.textContent="Error: "+e.message;}})();
+</script></body></html>
